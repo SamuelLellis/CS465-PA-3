@@ -13,6 +13,7 @@
 
 
 import mdp, util
+import math 
 
 from learningAgents import ValueEstimationAgent
 
@@ -45,6 +46,20 @@ class ValueIterationAgent(ValueEstimationAgent):
 
         # Write value iteration code here
         "*** YOUR CODE HERE ***"
+        for i in range(iterations):
+            copyvals = self.values.copy()
+            for state in mdp.getStates():
+                if mdp.isTerminal(state):
+                    self.values[state] = 0
+                    continue
+                sumMax = float("-inf")
+                for action in mdp.getPossibleActions(state):
+                    accum = 0
+                    for (nextstate, nextprob) in mdp.getTransitionStatesAndProbs(state,action):
+                        accum += nextprob * ((mdp.getReward(state, action, nextstate) + discount* copyvals[nextstate]))     
+                    if accum > sumMax:
+                        sumMax = accum
+                self.values[state] = sumMax                            
 
 
     def getValue(self, state):
@@ -59,8 +74,10 @@ class ValueIterationAgent(ValueEstimationAgent):
           Compute the Q-value of action in state from the
           value function stored in self.values.
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        accum = 0
+        for (nextstate, nextprob) in self.mdp.getTransitionStatesAndProbs(state,action):
+            accum += nextprob * (self.mdp.getReward(state, action, nextstate) + self.discount* self.values[nextstate])     
+        return accum
 
     def computeActionFromValues(self, state):
         """
@@ -71,8 +88,19 @@ class ValueIterationAgent(ValueEstimationAgent):
           there are no legal actions, which is the case at the
           terminal state, you should return None.
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+ 
+        sumMax = float("-inf")
+        bestAction = None
+        for action in self.mdp.getPossibleActions(state):
+            accum = 0
+            for (nextstate, nextprob) in self.mdp.getTransitionStatesAndProbs(state,action):
+                accum += nextprob * (self.mdp.getReward(state, action, nextstate) + self.discount* self.values[nextstate])     
+            if accum > sumMax:
+                sumMax = accum
+                bestAction = action
+        return bestAction 
+        
+
 
     def getPolicy(self, state):
         return self.computeActionFromValues(state)
