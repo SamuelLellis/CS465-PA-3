@@ -66,7 +66,7 @@ class QLearningAgent(ReinforcementAgent):
         q_pairs = [(state, a) for a in self.getLegalActions(state)]
         these_values = Counter()
         for q in q_pairs:
-            these_values[q] = self.values[q]
+            these_values[q] = self.getQValue(*q)
         return max(these_values.values())
 
     def computeActionFromQValues(self, state):
@@ -80,7 +80,7 @@ class QLearningAgent(ReinforcementAgent):
         q_pairs = [(state, a) for a in self.getLegalActions(state)]
         these_values = Counter()
         for q in q_pairs:
-            these_values[q] = self.values[q]
+            these_values[q] = self.getQValue(*q)
         return these_values.argMax()[1]
 
     def getAction(self, state):
@@ -172,19 +172,21 @@ class ApproximateQAgent(PacmanQAgent):
         return self.weights
 
     def getQValue(self, state, action):
-        """
-          Should return Q(state,action) = w * featureVector
-          where * is the dotProduct operator
-        """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        # approximate Q is:
+        #  Q(s, a) = sum i [1, n] of f_i(s, a) * w_i
+        # where f_i(s, a) is the ith "feature value"
+        #   and w_i is the ith weight
+        # i.e this is the dot product of f(s, a) with w
+        features = self.featExtractor.getFeatures(state, action)
+        return self.weights * features
 
     def update(self, state, action, nextState, reward):
-        """
-           Should update your weights based on transition
-        """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        sample = reward + self.discount * self.computeValueFromQValues(nextState)
+        difference = sample - self.getQValue(state, action)
+        features = self.featExtractor.getFeatures(state, action)
+        for feat_key in features:
+            self.weights[feat_key] = self.weights[feat_key] \
+                + self.alpha * difference * features[feat_key]
 
     def final(self, state):
         "Called at the end of each game."
